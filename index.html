@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transport Booking System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .view { display: none; }
+        .view.active { display: block; }
+        .card { 
+            background-color: white; 
+            border-radius: 0.75rem; 
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); 
+            padding: 1.5rem; 
+            transition: all 0.2s ease-in-out; 
+            width: 100%; 
+            display: flex; 
+            flex-direction: column;
+        }
+        .form-input { 
+            width: 100%; 
+            border-radius: 0.5rem; 
+            border: 1px solid #D1D5DB; 
+            padding: 0.75rem 1rem; 
+            transition: border-color 0.2s; 
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+        }
+        
+        .form-input:focus { 
+            border-color: #3B82F6; 
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4); 
+        }
+        .btn { 
+            padding: 0.75rem 1.5rem; 
+            border-radius: 0.5rem; 
+            font-weight: 600; 
+            text-align: center; 
+            transition: all 0.2s; 
+            cursor: pointer; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            line-height: 1.25; 
+             border: 1px solid transparent; 
+        }
+        .btn-primary { background-color: #3B82F6; color: white; border-color: #3B82F6; }
+        .btn-primary:hover { background-color: #2563EB; border-color: #2563EB; }
+        .btn-primary:disabled { background-color: #93C5FD; border-color: #93C5FD; cursor: not-allowed; }
+        .btn-secondary { background-color: #E5E7EB; color: #1F2937; border-color: #D1D5DB; }
+        .btn-secondary:hover { background-color: #D1D5DB; border-color: #9CA3AF; }
+        .btn-danger { background-color: #EF4444; color: white; border-color: #EF4444; }
+        .btn-danger:hover { background-color: #DC2626; border-color: #DC2626; }
+        .nav-btn { display: none; } 
+        [data-auth-state="signed-in"] .nav-btn-signed-in, [data-auth-state="signed-out"] .nav-btn-signed-out { display: inline-flex; }
+        [data-user-role="admin"] .nav-btn-admin, [data-user-role="user"] .nav-btn-user { display: inline-flex; }
+        .link { color: #3B82F6; text-decoration: underline; cursor: pointer; }
+        .link:hover { color: #2563EB; }
+        .table-wrapper {
+             overflow-x: auto; 
+             -webkit-overflow-scrolling: touch; 
+             border: 1px solid #e5e7eb; 
+             border-radius: 0.5rem; 
+             background-color: white; 
+        }
+        .table-wrapper table { min-width: 600px; width: 100%; }
+        .table-wrapper th, .table-wrapper td { white-space: nowrap; padding: 0.75rem 1rem; }
+        .table-wrapper thead th { background-color: #f9fafb; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb; }
+        .table-wrapper tbody tr:last-child { border-bottom: none; }
+        .vehicle-image {
+            width: 100%;
+            height: 150px; 
+            object-fit: cover; 
+            border-radius: 0.5rem 0.5rem 0 0; 
+            border-bottom: 1px solid #e5e7eb; 
+            background-color: #f3f4f6; 
+        }
+        .type-specific-fields { display: none; }
+        .type-specific-fields.active { display: block; }
+        .form-row.hidden { display: none; }
+
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
+
+    <div id="appContainer" class="container mx-auto p-4 md:p-8 max-w-7xl flex-grow w-full"> 
+
+        <header class="text-center mb-8">
+            <div class="flex justify-center items-center gap-3 md:gap-4">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" md:width="48" md:height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600 h-8 w-8 md:h-12 md:w-12"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v3c0 .6.4 1 1 1h2"/><path d="M19 17H5v-3c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v3z"/><path d="M5 17v-1.1c0-1 .5-1.9 1.4-2.4l3.1-1.8c.8-.5 1.7-.5 2.5 0l3.1 1.8c.9.5 1.4 1.4 1.4 2.4V17"/><path d="M8 12V8"/><path d="M16 12V8"/><circle cx="18" cy="19" r="2"/><circle cx="6" cy="19" r="2"/></svg>
+                <h1 class="text-3xl md:text-5xl font-bold text-gray-800">Swift-Trip Bookings</h1>
+            </div>
+            <p id="headerSubtitle" class="text-gray-600 mt-2 text-sm md:text-base">Your one-stop solution for transport management.</p>
+        </header>
+
+        <nav id="mainNav" class="bg-white rounded-lg shadow-md p-2 flex flex-wrap justify-center items-center gap-2 mb-8">
+            <button class="nav-btn nav-btn-admin btn btn-secondary text-sm md:text-base" data-view="adminDashboard">Dashboard</button>
+            <button class="nav-btn nav-btn-admin btn btn-secondary text-sm md:text-base" data-view="addVehicle">Add Vehicle</button>
+            <button class="nav-btn nav-btn-admin btn btn-secondary text-sm md:text-base" data-view="adminViewBookings">View All Bookings</button>
+
+            <button class="nav-btn nav-btn-user btn btn-secondary text-sm md:text-base" data-view="userDashboard">Search & Book</button>
+            <button class="nav-btn nav-btn-user btn btn-secondary text-sm md:text-base" data-view="userViewBookings">My Bookings</button>
+
+            <button class="nav-btn nav-btn-signed-out btn btn-primary text-sm md:text-base" data-view="login">Login</button>
+            <button class="nav-btn nav-btn-signed-out btn btn-secondary text-sm md:text-base" data-view="signup">Sign Up</button>
+            
+            <div id="userAccountInfo" class="nav-btn nav-btn-signed-in w-full md:w-auto mt-2 md:mt-0 md:ml-auto flex flex-col sm:flex-row items-center justify-center sm:justify-end gap-2 md:gap-3 px-2">
+                <span id="userEmailDisplay" class="text-xs sm:text-sm font-medium text-gray-600 truncate max-w-[150px] sm:max-w-[250px]" title=""></span>
+                <button id="logoutBtn" class="btn btn-danger text-xs px-2 py-1 md:text-sm md:px-3 md:py-1 w-full sm:w-auto">Logout</button>
+            </div>
+        </nav>
+
+        <main id="contentArea">
+
+            <div id="login" class="view">
+                 <div class="card max-w-md mx-auto"> 
+                    <h2 class="text-2xl font-bold mb-6 text-center">Login to your Account</h2>
+                    <form id="loginForm" class="space-y-4">
+                        <div><label for="loginEmail" class="block font-medium mb-1 text-sm">Email</label><input type="email" id="loginEmail" name="loginEmail" class="form-input" required></div>
+                        <div><label for="loginPassword" class="block font-medium mb-1 text-sm">Password</label><input type="password" id="loginPassword" name="loginPassword" class="form-input" required></div>
+                        <button type="submit" class="btn btn-primary w-full mt-6">Login</button> 
+                        <p class="text-center text-sm mt-4">
+                            <span class="link" id="forgotPasswordLink">Forgot Password?</span>
+                        </p>
+                         <p class="text-center text-sm mt-2">
+                            Don't have an account? <span class="link" onclick="bookingApp.switchView('signup')">Sign up here</span>
+                        </p>
+                    </form>
+                 </div>
+            </div>
+
+            <div id="signup" class="view">
+                <div class="card max-w-md mx-auto"> 
+                    <h2 class="text-2xl font-bold mb-6 text-center">Create a New Account</h2>
+                    <form id="signupForm" class="space-y-4">
+                        <div><label for="signupName" class="block font-medium mb-1 text-sm">Full Name</label><input type="text" id="signupName" name="signupName" class="form-input" required></div>
+                        <div><label for="signupEmail" class="block font-medium mb-1 text-sm">Email</label><input type="email" id="signupEmail" name="signupEmail" class="form-input" required></div>
+                        <div><label for="signupPassword" class="block font-medium mb-1 text-sm">Password (min. 6 characters)</label><input type="password" id="signupPassword" name="signupPassword" class="form-input" minlength="6" required></div>
+                        <button type="submit" class="btn btn-primary w-full mt-6">Create Account</button> 
+                    </form>
+                    <p class="text-center text-sm mt-4">
+                        Already have an account? <span class="link" onclick="bookingApp.switchView('login')">Login here</span>
+                    </p>
+                </div>
+            </div>
+
+            <div id="resetPassword" class="view">
+                 <div class="card max-w-md mx-auto"> 
+                    <h2 class="text-2xl font-bold mb-6 text-center">Reset Your Password</h2>
+                    <form id="resetPasswordForm" class="space-y-4">
+                        <p class="text-sm text-gray-600">Enter your email address below, and we'll send you a link to reset your password.</p>
+                        <div><label for="resetEmail" class="block font-medium mb-1 text-sm">Email</label><input type="email" id="resetEmail" name="resetEmail" class="form-input" required></div>
+                        <button type="submit" class="btn btn-primary w-full mt-6">Send Reset Email</button> 
+                    </form>
+                    <p class="text-center text-sm mt-4">
+                        Remembered your password? <span class="link" onclick="bookingApp.switchView('login')">Back to Login</span>
+                    </p>
+                </div>
+            </div>
+            
+             <div id="loading" class="view text-center p-10">
+                <p class="text-lg font-semibold text-gray-600">Loading Application...</p>
+                 <div class="mt-4 animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+            </div>
+
+            <div id="userDashboard" class="view">
+                <h2 class="text-xl md:text-2xl font-bold mb-4">Search & Book a Trip</h2>
+                <div id="userVehicleList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                      <p class="text-gray-500 italic col-span-full">Loading available trips...</p>
+                </div>
+            </div>
+            
+            <div id="userViewBookings" class="view">
+                 <div class="card max-w-4xl mx-auto p-4 md:p-6"> 
+                    <h2 class="text-xl md:text-2xl font-bold mb-6 text-center">My Bookings</h2>
+                    <div id="userBookingList" class="table-wrapper">
+                         <p class="text-center p-6 text-gray-500 italic">Loading bookings...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bookingModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50 p-4">
+                <div class="card max-w-md w-full mx-auto"> 
+                     <h2 class="text-xl md:text-2xl font-bold mb-6 text-center">Confirm Your Booking</h2>
+                     <form id="makeBookingForm" class="space-y-4">
+                         <input type="hidden" id="bookingVehicleId">
+                         <div class="text-sm md:text-base"><p><strong>Vehicle:</strong> <span id="modalVehicleInfo"></span></p></div>
+                         <div class="text-sm md:text-base"><p><strong id="modalRouteLabel">Route:</strong> <span id="modalRouteInfo"></span></p></div>
+                         <p id="bookingPriceLabel" class="text-sm md:text-base"><strong>Price:</strong> ₹<span id="modalPriceInfo"></span> per seat/day</p> 
+                         <hr class="my-4">
+                         
+                         <div id="bookingPickupRow" class="hidden">
+                             <label for="bookingPickup" class="block font-medium mb-1 text-sm">Your Pickup Location</label>
+                             <input type="text" id="bookingPickup" class="form-input" placeholder="e.g., Surat Station">
+                         </div>
+                         <div id="bookingDropoffRow" class="hidden">
+                             <label for="bookingDropoff" class="block font-medium mb-1 text-sm">Your Drop-off Location</label>
+                             <input type="text" id="bookingDropoff" class="form-input" placeholder="e.g., Main Street Hotel">
+                         </div>
+                         <div id="bookingNumDaysRow" class="hidden">
+                            <label for="numDays" class="block font-medium mb-1 text-sm">Number of Days</label>
+                            <input type="number" id="numDays" class="form-input" placeholder="1" min="1" value="1">
+                         </div> 
+                         <div id="bookingNumSeatsRow">
+                            <label for="numSeats" class="block font-medium mb-1 text-sm">Number of Seats</label>
+                            <input type="number" id="numSeats" class="form-input" placeholder="1" min="1" value="1" required>
+                         </div> 
+                         
+                         <div class="flex flex-col sm:flex-row gap-3 mt-6"> 
+                            <button type="button" id="cancelBookingBtn" class="btn btn-secondary w-full">Cancel</button>
+                            <button type="submit" class="btn btn-primary w-full">Book Now</button>
+                         </div>
+                     </form>
+                </div>
+            </div>
+
+            <div id="adminDashboard" class="view">
+                <h2 class="text-xl md:text-2xl font-bold mb-4">Admin Dashboard: All Vehicles</h2>
+                <div id="adminVehicleList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                     <p class="text-gray-500 italic col-span-full">Loading vehicles...</p>
+                </div>
+            </div>
+
+            <div id="adminViewBookings" class="view">
+                <div class="card max-w-5xl mx-auto p-4 md:p-6"> 
+                    <h2 class="text-xl md:text-2xl font-bold mb-6 text-center">All System Bookings</h2>
+                    <div id="adminBookingList" class="table-wrapper">
+                         <p class="text-center p-6 text-gray-500 italic">Loading bookings...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="addVehicle" class="view">
+                 <div class="card max-w-2xl mx-auto"> 
+                    <h2 class="text-xl md:text-2xl font-bold mb-6 text-center">Add a New Vehicle</h2>
+                    <form id="addVehicleForm" class="space-y-4">
+                        <div>
+                            <label for="vehicleType" class="block font-medium mb-1 text-sm">Vehicle Type</label>
+                            <select id="vehicleType" class="form-input">
+                                <option value="Flight">Flight</option>
+                                <option value="Train">Train</option>
+                                <option value="Bus">Bus</option>
+                                <option value="Car">Car Rental</option> 
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label for="vehicleId" class="block font-medium mb-1 text-sm">Vehicle ID / Number / Plate</label><input type="text" id="vehicleId" class="form-input" required></div>
+                            <div><label for="capacity" class="block font-medium mb-1 text-sm">Capacity (Seats/People)</label><input type="number" id="capacity" class="form-input" min="1" required></div>
+                            
+                            <div class="form-row" id="originRow">
+                                <label for="origin" class="block font-medium mb-1 text-sm">Origin / Pickup Location</label>
+                                <input type="text" id="origin" class="form-input">
+                            </div>
+                            <div class="form-row" id="destinationRow">
+                                <label for="destination" class="block font-medium mb-1 text-sm">Destination</label>
+                                <input type="text" id="destination" class="form-input">
+                            </div>
+
+                            <div><label for="pricePerSeat" class="block font-medium mb-1 text-sm">Price per Seat / Day (₹)</label><input type="number" step="0.01" id="pricePerSeat" class="form-input" min="0" required></div>
+                             <div><label for="vehicleName" class="block font-medium mb-1 text-sm">Name (Airline/Train/Operator/Model)</label><input type="text" id="vehicleName" class="form-input" required></div>
+                        </div>
+                         <div>
+                            <label for="imageUrl" class="block font-medium mb-1 text-sm">Image URL (Optional)</label>
+                            <input type="url" id="imageUrl" class="form-input" placeholder="https://example.com/image.jpg">
+                        </div>
+
+                        <div id="typeSpecificFieldsContainer" class="space-y-4 pt-4 border-t">
+                            <h3 class="text-base font-semibold text-gray-700">Type Specific Details:</h3>
+                            
+                            <div id="FlightFields" class="type-specific-fields active space-y-4"> 
+                                 <p class="text-xs text-gray-500">No additional details needed for Flights.</p> 
+                            </div>
+                             <div id="TrainFields" class="type-specific-fields space-y-4"> 
+                                <p class="text-xs text-gray-500">No additional details needed for Trains.</p>
+                            </div>
+                            <div id="BusFields" class="type-specific-fields space-y-4">
+                                <p class="text-xs text-gray-500">No additional details needed for Buses.</p>
+                            </div>
+                            <div id="CarFields" class="type-specific-fields space-y-4">
+                                <div>
+                                    <label for="carType" class="block font-medium mb-1 text-sm">Car Type</label>
+                                    <select id="carType" class="form-input">
+                                        <option value="Hatchback/Sedan">Hatchback/Sedan (Small)</option>
+                                        <option value="SUV/Luxury">SUV/Luxury (Big)</option>
+                                        <option value="Van/Minibus">Van/Minibus (Traveller)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="operatingArea" class="block font-medium mb-1 text-sm">Operating City / Area</label>
+                                    <input type="text" id="operatingArea" class="form-input" placeholder="e.g., Surat">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" id="addVehicleSubmitBtn" class="btn btn-primary w-full mt-6">Add Vehicle</button> 
+                    </form>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="text-center p-4 text-xs text-gray-500 mt-auto"> 
+        &copy; 2025 Swift-Trip Bookings. All rights reserved.
+    </footer>
+
+    <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl p-6 md:p-8 max-w-sm w-full text-center mx-auto"> 
+            <p id="modalMessage" class="text-base md:text-lg mb-6"></p>
+            <button id="closeModalBtn" class="btn btn-primary w-full sm:w-auto">Close</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, addDoc, runTransaction, deleteDoc, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJhgP0I_X-kYyB5hEZoudAWasU4lcoezc",
+            authDomain: "transport-booking-system-6f30e.firebaseapp.com",
+            projectId: "transport-booking-system-6f30e",
+            storageBucket: "transport-booking-system-6f30e.firebasestorage.app", 
+            messagingSenderId: "1017733558947",
+            appId: "1:1017733558947:web:9c4cb85526312ddab98516",
+            measurementId: "G-BYHC2JX24W"
+        };
+        
+        const appId = 'swift-trip-booking-app'; 
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const bookingApp = {
+            state: { 
+                currentUser: null, userRole: 'none', activeView: 'loading',
+                vehicles: [], bookings: [], myBookings: [],
+            },
+            elements: { 
+                body: document.body, headerSubtitle: document.getElementById('headerSubtitle'),
+                navButtons: document.querySelectorAll('.nav-btn'), views: document.querySelectorAll('.view'),
+                userEmailDisplay: document.getElementById('userEmailDisplay'), logoutBtn: document.getElementById('logoutBtn'),
+                loginForm: document.getElementById('loginForm'), signupForm: document.getElementById('signupForm'),
+                addVehicleForm: document.getElementById('addVehicleForm'),
+                adminVehicleList: document.getElementById('adminVehicleList'), userVehicleList: document.getElementById('userVehicleList'),
+                adminBookingList: document.getElementById('adminBookingList'), userBookingList: document.getElementById('userBookingList'),
+                messageModal: document.getElementById('messageModal'), modalMessage: document.getElementById('modalMessage'),
+                closeModalBtn: document.getElementById('closeModalBtn'),
+                bookingModal: document.getElementById('bookingModal'), makeBookingForm: document.getElementById('makeBookingForm'),
+                cancelBookingBtn: document.getElementById('cancelBookingBtn'),
+                forgotPasswordLink: document.getElementById('forgotPasswordLink'), resetPasswordForm: document.getElementById('resetPasswordForm'),
+                
+                vehicleTypeSelect: document.getElementById('vehicleType'),
+                typeSpecificFieldsContainer: document.getElementById('typeSpecificFieldsContainer'),
+                flightFields: document.getElementById('FlightFields'),
+                trainFields: document.getElementById('TrainFields'),
+                busFields: document.getElementById('BusFields'),
+                carFields: document.getElementById('CarFields'), 
+                imageUrlInput: document.getElementById('imageUrl'), 
+                addVehicleSubmitBtn: document.getElementById('addVehicleSubmitBtn'),
+                addVehicleOriginRow: document.getElementById('originRow'),
+                addVehicleDestinationRow: document.getElementById('destinationRow'),
+                addVehicleOperatingArea: document.getElementById('operatingArea'),
+
+                modalRouteLabel: document.getElementById('modalRouteLabel'),
+                modalRouteInfo: document.getElementById('modalRouteInfo'),
+                bookingPriceLabel: document.getElementById('bookingPriceLabel'),
+                bookingNumSeatsRow: document.getElementById('bookingNumSeatsRow'),
+                bookingNumSeatsInput: document.getElementById('numSeats'), 
+                bookingNumDaysRow: document.getElementById('bookingNumDaysRow'),
+                bookingNumDaysInput: document.getElementById('numDays'),
+                bookingPickupRow: document.getElementById('bookingPickupRow'),
+                bookingPickupInput: document.getElementById('bookingPickup'),
+                bookingDropoffRow: document.getElementById('bookingDropoffRow'),
+                bookingDropoffInput: document.getElementById('bookingDropoff'),
+            },
+            listeners: [], 
+
+            init() { 
+                this.addEventListeners(); 
+                this.switchView('loading'); 
+                this.handleAuthenticationState(); 
+            },
+
+             handleAuthenticationState() { 
+                 onAuthStateChanged(auth, async (user) => {
+                    this.cleanupListeners(); 
+                    if (user) {
+                        this.state.currentUser = user;
+                        const userDocRef = doc(db, "users", user.uid); 
+                        const userDoc = await getDoc(userDocRef);
+                        if (userDoc.exists() && userDoc.data().role) {
+                            this.state.userRole = userDoc.data().role;
+                        } else {
+                            this.state.userRole = 'user'; 
+                             if (!userDoc.exists()) {
+                                 try { 
+                                     await setDoc(userDocRef, { email: user.email, role: 'user', createdAt: Timestamp.fromDate(new Date()) });
+                                     console.log("Created missing user document for:", user.email);
+                                 } catch (error) { console.error("Error creating missing user document:", error); }
+                             }
+                        }
+                        this.elements.body.dataset.authState = 'signed-in';
+                        this.elements.body.dataset.userRole = this.state.userRole;
+                        this.elements.userEmailDisplay.textContent = user.email;
+                         this.elements.userEmailDisplay.title = user.email; 
+                        this.renderAppForRole(); 
+                    } else { 
+                        this.state.currentUser = null; this.state.userRole = 'none';
+                        this.elements.body.dataset.authState = 'signed-out';
+                        this.elements.body.dataset.userRole = 'none';
+                        this.elements.userEmailDisplay.textContent = ''; this.elements.userEmailDisplay.title = ''; 
+                        this.switchView('login'); 
+                        this.elements.headerSubtitle.textContent = 'Your one-stop solution for transport management.';
+                    }
+                });
+            },
+            renderAppForRole() { 
+                this.setupRealtimeListeners(); 
+                if (this.state.userRole === 'admin') {
+                    this.switchView('adminDashboard'); this.elements.headerSubtitle.textContent = 'Administration Panel';
+                } else {
+                    this.switchView('userDashboard');
+                    this.elements.headerSubtitle.textContent = `Welcome, ${this.state.currentUser?.email || 'User'}!`; 
+                }
+            },
+
+            addEventListeners() {
+                this.elements.navButtons.forEach(btn => btn.addEventListener('click', () => { if (btn.dataset.view) this.switchView(btn.dataset.view); }));
+                this.elements.loginForm.addEventListener('submit', this.handleLogin.bind(this));
+                this.elements.signupForm.addEventListener('submit', this.handleSignup.bind(this));
+                this.elements.logoutBtn.addEventListener('click', () => signOut(auth)); 
+                this.elements.forgotPasswordLink.addEventListener('click', () => this.switchView('resetPassword'));
+                this.elements.resetPasswordForm.addEventListener('submit', this.handlePasswordReset.bind(this));
+                if (this.elements.closeModalBtn) this.elements.closeModalBtn.addEventListener('click', () => this.hideMessage());
+                 if (this.elements.messageModal) this.elements.messageModal.addEventListener('click', (e) => { if (e.target === this.elements.messageModal) this.hideMessage(); });
+                 if (this.elements.bookingModal) {
+                     this.elements.cancelBookingBtn.addEventListener('click', () => this.elements.bookingModal.classList.add('hidden'));
+                     this.elements.bookingModal.addEventListener('click', (e) => { if (e.target === this.elements.bookingModal) this.elements.bookingModal.classList.add('hidden'); });
+                 }
+                this.elements.addVehicleForm.addEventListener('submit', this.handleAddVehicle.bind(this));
+                 if (this.elements.vehicleTypeSelect) {
+                    this.elements.vehicleTypeSelect.addEventListener('change', this.handleVehicleTypeChange.bind(this));
+                    this.handleVehicleTypeChange(); 
+                 }
+                this.elements.makeBookingForm.addEventListener('submit', this.handleMakeBooking.bind(this));
+            },
+             handleVehicleTypeChange() { 
+                 const selectedType = this.elements.vehicleTypeSelect.value; 
+                 const allFields = this.elements.typeSpecificFieldsContainer.querySelectorAll('.type-specific-fields'); 
+                 
+                 const originRow = this.elements.addVehicleOriginRow;
+                 const destRow = this.elements.addVehicleDestinationRow;
+                 const opAreaInput = this.elements.addVehicleOperatingArea;
+                 const originInput = this.elements.addVehicleForm.origin;
+                 const destInput = this.elements.addVehicleForm.destination;
+
+                 allFields.forEach(fieldDiv => {
+                     if (fieldDiv) { 
+                         const isActive = fieldDiv.id === `${selectedType}Fields`;
+                         fieldDiv.classList.toggle('active', isActive);
+                     }
+                 });
+
+                 if (selectedType === 'Car') {
+                    originRow.classList.add('hidden');
+                    destRow.classList.add('hidden');
+                    originInput.required = false;
+                    destInput.required = false;
+                    opAreaInput.required = true;
+                 } else {
+                    originRow.classList.remove('hidden');
+                    destRow.classList.remove('hidden');
+                    originInput.required = true;
+                    destInput.required = true;
+                    opAreaInput.required = false;
+                 }
+             },
+
+            setupRealtimeListeners() {
+                this.cleanupListeners(); 
+                 const vehiclesRef = collection(db, `/artifacts/${appId}/public/data/vehicles`);
+                 this.listeners.push(onSnapshot(vehiclesRef, snap => {
+                    this.state.vehicles = snap.docs
+                        .map(d => ({ fb_id: d.id, ...d.data() }))
+                        .sort((a, b) => (a.name || '').localeCompare(b.name || '')); 
+                    if(this.state.userRole === 'admin') this.renderAdminVehicles();
+                    if(this.state.userRole === 'user') this.renderUserVehicles();
+                }, error => {
+                     console.error("Error fetching vehicles:", error);
+                     this.showMessage("Error loading vehicle data. Please try again later.");
+                 }));
+
+                if (this.state.userRole === 'admin') {
+                    const bookingsQuery = query(collection(db, `/artifacts/${appId}/public/data/bookings`));
+                    this.listeners.push(onSnapshot(bookingsQuery, snap => {
+                        this.state.bookings = snap.docs
+                            .map(d => ({ fb_id: d.id, ...d.data() }))
+                            .sort((a,b)=> (b.bookedAt?.seconds || 0) - (a.bookedAt?.seconds || 0)); 
+                        this.renderAdminBookings();
+                    }, error => {
+                         console.error("Error fetching all bookings:", error);
+                         this.showMessage("Error loading booking data. Please try again later.");
+                    }));
+                } 
+                else if (this.state.userRole === 'user' && this.state.currentUser) {
+                    const myBookingsQuery = query(collection(db, `/artifacts/${appId}/public/data/bookings`), where("userId", "==", this.state.currentUser.uid)); 
+                    this.listeners.push(onSnapshot(myBookingsQuery, snap => {
+                         this.state.myBookings = snap.docs
+                            .map(d => ({ fb_id: d.id, ...d.data() }))
+                            .sort((a,b)=> (b.bookedAt?.seconds || 0) - (a.bookedAt?.seconds || 0)); 
+                        this.renderUserBookings();
+                    }, error => {
+                         console.error("Error fetching user bookings:", error);
+                         this.showMessage("Error loading your bookings. Please try again later.");
+                    }));
+                }
+            },
+            cleanupListeners() {
+                this.listeners.forEach(unsubscribe => unsubscribe());
+                this.listeners = [];
+            },
+
+            async handleLogin(e) { 
+                e.preventDefault();
+                const form = e.target;
+                const email = form.loginEmail.value;
+                const password = form.loginPassword.value;
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    form.reset();
+                } catch (error) { 
+                    console.error("Login Error:", error.code, error.message);
+                    this.showMessage(`Login Failed: ${this.getFriendlyAuthError(error)}`); 
+                }
+            },
+            async handleSignup(e) { 
+                e.preventDefault();
+                const form = e.target;
+                const name = form.signupName.value;
+                const email = form.signupEmail.value;
+                const password = form.signupPassword.value;
+                 if (!name || !email || !password) {
+                     this.showMessage("Please fill in all fields.");
+                     return;
+                 }
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+                    await setDoc(doc(db, "users", user.uid), {
+                        name: name, 
+                        email: email,
+                        role: 'user', 
+                        createdAt: Timestamp.fromDate(new Date()),
+                    });
+                    console.log("SIMULATING WELCOME EMAIL to", email); 
+                    this.showMessage("Account created successfully! Please log in.");
+                     form.reset();
+                    this.switchView('login'); 
+                } catch (error) { 
+                    console.error("Signup Error:", error.code, error.message);
+                    this.showMessage(`Signup Failed: ${this.getFriendlyAuthError(error)}`); 
+                }
+            },
+            async handlePasswordReset(e) {
+                 e.preventDefault();
+                 const form = e.target;
+                 const email = form.resetEmail.value;
+                  if (!email) {
+                     this.showMessage("Please enter your email address.");
+                     return;
+                 }
+                 try {
+                     await sendPasswordResetEmail(auth, email);
+                     this.showMessage("Password reset email sent! Check your inbox (and spam folder).");
+                     form.reset();
+                     this.switchView('login'); 
+                 } catch (error) {
+                     console.error("Password Reset Error:", error.code, error.message);
+                     this.showMessage(`Password Reset Failed: ${this.getFriendlyAuthError(error)}`);
+                 }
+            },
+            getFriendlyAuthError(error) {
+                 switch (error.code) {
+                     case 'auth/invalid-email': return 'Invalid email address format.';
+                     case 'auth/user-disabled': return 'This user account has been disabled.';
+                     case 'auth/user-not-found': return 'No account found with this email address.';
+                     case 'auth/wrong-password': return 'Incorrect password. Please try again.';
+                     case 'auth/email-already-in-use': return 'This email address is already registered. Please log in.';
+                     case 'auth/weak-password': return 'Password is too weak. It must be at least 6 characters.';
+                     case 'auth/invalid-credential': return 'Invalid email or password.';
+                     default: return error.message; 
+                 }
+             },
+
+            async handleAddVehicle(e) {
+                e.preventDefault();
+                if (this.state.userRole !== 'admin') return this.showMessage("Unauthorized.");
+                
+                const form = e.target;
+                const submitButton = this.elements.addVehicleSubmitBtn; 
+                submitButton.disabled = true; 
+                submitButton.textContent = "Adding..."; 
+
+                const vehicleType = form.vehicleType.value; 
+                const capacity = parseInt(form.capacity.value);
+                const price = parseFloat(form.pricePerSeat.value);
+                const imageUrl = form.imageUrl.value.trim() || null; 
+
+                 if (isNaN(capacity) || capacity <= 0) { submitButton.disabled = false; submitButton.textContent = "Add Vehicle"; return this.showMessage("Capacity must be positive."); }
+                 if (isNaN(price) || price < 0) { submitButton.disabled = false; submitButton.textContent = "Add Vehicle"; return this.showMessage("Price cannot be negative."); }
+                 if (imageUrl && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+                      submitButton.disabled = false; submitButton.textContent = "Add Vehicle"; return this.showMessage("Invalid Image URL. Must start with http:// or https://");
+                 }
+
+                const newVehicle = {
+                    type: vehicleType,
+                    id: form.vehicleId.value.trim(), 
+                    name: form.vehicleName.value.trim(), 
+                    capacity: capacity,
+                    pricePerSeat: price,
+                    bookedSeats: 0, 
+                    imageUrl: imageUrl, 
+                };
+
+                 if (vehicleType === 'Car') {
+                    const carTypeSelect = form.querySelector('#carType'); 
+                    const operatingArea = form.operatingArea.value.trim();
+                    if (!operatingArea) {
+                         submitButton.disabled = false; submitButton.textContent = "Add Vehicle"; return this.showMessage("Please enter an Operating City / Area for the Car Rental.");
+                    }
+                    if (carTypeSelect) newVehicle.carType = carTypeSelect.value; 
+                    newVehicle.origin = operatingArea; 
+                    newVehicle.destination = operatingArea; 
+                 } else {
+                     const origin = form.origin.value.trim();
+                     const destination = form.destination.value.trim();
+                     if (!origin || !destination) {
+                         submitButton.disabled = false; submitButton.textContent = "Add Vehicle"; return this.showMessage("Please enter an Origin and Destination.");
+                     }
+                     newVehicle.origin = origin;
+                     newVehicle.destination = destination;
+                 }
+
+                try {
+                    this.showMessage("Saving vehicle details..."); 
+                    const docRef = await addDoc(collection(db, `/artifacts/${appId}/public/data/vehicles`), newVehicle);
+                    this.showMessage(`Vehicle '${newVehicle.name}' added successfully!`);
+                    form.reset(); 
+                     this.handleVehicleTypeChange(); 
+                    this.switchView('adminDashboard'); 
+                } catch (error) { 
+                     console.error("Add Vehicle Firestore Error:", error);
+                     this.showMessage(`Error saving vehicle details: ${error.message}`); 
+                } finally {
+                    submitButton.disabled = false; 
+                    submitButton.textContent = "Add Vehicle"; 
+                }
+            },
+            async handleDeleteVehicle(vehicleFbId) {
+                 if (this.state.userRole !== 'admin') return this.showMessage("Unauthorized.");
+                 const vehicleToDelete = this.state.vehicles.find(v => v.fb_id === vehicleFbId);
+                 const vehicleName = vehicleToDelete ? `${vehicleToDelete.name} (${vehicleToDelete.id})` : `ID ${vehicleFbId}`;
+                 this.showConfirmation(`Delete vehicle ${vehicleName}?`, async () => {
+                     try { 
+                         await deleteDoc(doc(db, `/artifacts/${appId}/public/data/vehicles`, vehicleFbId)); 
+                         this.showMessage('Vehicle deleted.'); 
+                     } 
+                     catch (error) { console.error("Delete Vehicle Error:", error); this.showMessage(`Error deleting: ${error.message}`); }
+                 });
+            },
+            async handleAdminCancelBooking(booking) {
+                 if (this.state.userRole !== 'admin') return this.showMessage("Unauthorized.");
+                 this.showConfirmation(`Cancel booking ${booking.fb_id} for ${booking.passengerEmail}?`, async () => {
+                    await this.cancelBookingLogic(booking); 
+                });
+            },
+
+            openBookingModal(vehicle) {
+                 if (!this.state.currentUser) return this.showMessage("Please log in first.");
+                 
+                 this.elements.makeBookingForm.bookingVehicleId.value = vehicle.fb_id; 
+                 
+                 const numSeatsRow = this.elements.bookingNumSeatsRow;
+                 const numSeatsInput = this.elements.bookingNumSeatsInput; 
+                 const numDaysRow = this.elements.bookingNumDaysRow;
+                 const numDaysInput = this.elements.bookingNumDaysInput;
+                 const destRow = this.elements.bookingDropoffRow;
+                 const destInput = this.elements.bookingDropoffInput; 
+                 const pickupRow = this.elements.bookingPickupRow;
+                 const pickupInput = this.elements.bookingPickupInput;
+                 
+                 const priceLabel = this.elements.bookingPriceLabel;
+                 const priceSpan = priceLabel.querySelector('#modalPriceInfo');
+                 const routeLabel = this.elements.modalRouteLabel;
+                 const routeInfoSpan = this.elements.modalRouteInfo;
+
+                 this.elements.bookingModal.querySelector('#modalVehicleInfo').textContent = `${vehicle.name} (${vehicle.id})`;
+                 priceSpan.textContent = (vehicle.pricePerSeat || 0).toFixed(2);
+
+                 if (vehicle.type === 'Car') {
+                     numSeatsRow.classList.add('hidden'); 
+                     numSeatsInput.required = false; 
+                     
+                     numDaysRow.classList.remove('hidden');
+                     numDaysInput.required = true;
+                     numDaysInput.value = 1;
+                     
+                     pickupRow.classList.remove('hidden');
+                     pickupInput.value = '';
+                     pickupInput.required = true;
+                     
+                     destRow.classList.remove('hidden'); 
+                     destInput.value = ''; 
+                     destInput.required = true; 
+                     
+                     routeLabel.textContent = "Operating Area:"; 
+                     routeInfoSpan.textContent = `${vehicle.origin}`; 
+                     
+                     const priceTextNode = priceSpan.nextSibling; 
+                     if (priceTextNode && priceTextNode.nodeType === Node.TEXT_NODE) {
+                         priceTextNode.textContent = ' / day'; 
+                     }
+
+                 } else {
+                     numSeatsRow.classList.remove('hidden'); 
+                     numSeatsInput.required = true; 
+                     numSeatsInput.value = 1;
+                     
+                     numDaysRow.classList.add('hidden');
+                     numDaysInput.required = false;
+                     
+                     pickupRow.classList.add('hidden');
+                     pickupInput.required = false;
+                     
+                     destRow.classList.add('hidden'); 
+                     destInput.required = false; 
+                     
+                     routeLabel.textContent = "Route:"; 
+                     routeInfoSpan.textContent = `${vehicle.origin} → ${vehicle.destination}`; 
+                     
+                     const priceTextNode = priceSpan.nextSibling;
+                     if (priceTextNode && priceTextNode.nodeType === Node.TEXT_NODE) {
+                         priceTextNode.textContent = ' / seat'; 
+                     }
+                 }
+                 
+                 this.elements.bookingModal.classList.remove('hidden'); 
+            },
+            async handleMakeBooking(e) {
+                e.preventDefault();
+                if (!this.state.currentUser) return this.showMessage("Please log in.");
+
+                const vehicleFbId = e.target.bookingVehicleId.value;
+                const vehicleRef = doc(db, `/artifacts/${appId}/public/data/vehicles`, vehicleFbId);
+                
+                const bookButton = e.target.querySelector('button[type="submit"]');
+                bookButton.disabled = true; 
+
+                try {
+                    const vehicle = this.state.vehicles.find(v => v.fb_id === vehicleFbId);
+                    if (!vehicle) throw new Error("Vehicle data not found in state.");
+
+                    let numSeats = 1; 
+                    let numDays = null;
+                    let userPickup = null;
+                    let userDropoff = null;
+                    let calculatedPrice = 0;
+
+                    if (vehicle.type === 'Car') {
+                        numDays = parseInt(this.elements.bookingNumDaysInput.value);
+                        userPickup = this.elements.bookingPickupInput.value.trim();
+                        userDropoff = this.elements.bookingDropoffInput.value.trim();
+                        
+                        if (isNaN(numDays) || numDays <= 0) throw new Error("Please enter a valid number of days (1 or more).");
+                        if (!userPickup || !userDropoff) throw new Error("Please enter both pickup and drop-off locations.");
+                        
+                        calculatedPrice = (vehicle.pricePerSeat || 0) * numDays;
+
+                    } else {
+                        numSeats = parseInt(this.elements.bookingNumSeatsInput.value); 
+                        if (isNaN(numSeats) || numSeats <= 0) {
+                            throw new Error("Please enter a valid number of seats (1 or more).");
+                        }
+                        calculatedPrice = (vehicle.pricePerSeat || 0) * numSeats;
+                    }
+
+                    await runTransaction(db, async (transaction) => {
+                        const vehicleDoc = await transaction.get(vehicleRef);
+                        if (!vehicleDoc.exists()) throw new Error("Vehicle not found in database.");
+
+                        const vehicleData = vehicleDoc.data();
+                        const available = (vehicleData.capacity || 0) - (vehicleData.bookedSeats || 0);
+                        
+                        let itemsToBook = (vehicle.type === 'Car') ? 1 : numSeats; 
+                        
+                        if (itemsToBook > available) {
+                             throw new Error(`Booking failed: Not enough availability. Only ${available} ${vehicle.type === 'Car' ? 'cars' : 'seats'} left.`);
+                        }
+
+                        const newBookedCount = (vehicleData.bookedSeats || 0) + itemsToBook; 
+                        transaction.update(vehicleRef, { bookedSeats: newBookedCount });
+
+                        const newBooking = {
+                            userId: this.state.currentUser.uid, 
+                            passengerEmail: this.state.currentUser.email,
+                            vehicleFbId: vehicleFbId, 
+                            vehicleInfo: `${vehicleData.name} (${vehicleData.id})`, 
+                            route: `${vehicleData.origin} → ${vehicleData.destination}`, 
+                            numSeats: numSeats, 
+                            totalPrice: calculatedPrice,
+                            bookedAt: Timestamp.fromDate(new Date()),
+                            vehicleType: vehicle.type, 
+                            
+                            userPickup: userPickup, 
+                            userDropoff: userDropoff, 
+                            numDays: numDays 
+                        };
+                        const newBookingRef = doc(collection(db, `/artifacts/${appId}/public/data/bookings`)); 
+                        transaction.set(newBookingRef, newBooking); 
+                    });
+                    
+                    this.showMessage('Booking successful!');
+                    this.elements.bookingModal.classList.add('hidden'); 
+                    e.target.reset(); 
+                    this.switchView('userViewBookings'); 
+                } catch (error) { 
+                     console.error("Booking Error:", error);
+                     this.showMessage(`Booking failed: ${error.message}`); 
+                } finally {
+                    bookButton.disabled = false; 
+                }
+            },
+            async handleUserCancelBooking(booking) {
+                 if (!this.state.currentUser || booking.userId !== this.state.currentUser.uid) return this.showMessage("Unauthorized.");
+                 this.showConfirmation(`Cancel your booking on ${booking.vehicleInfo}?`, async () => {
+                     await this.cancelBookingLogic(booking); 
+                 });
+            },
+
+             async cancelBookingLogic(booking) { 
+                 if (!booking || !booking.fb_id || !booking.vehicleFbId) {
+                     return this.showMessage("Cannot cancel: Invalid data.");
+                 }
+                 const itemsToRelease = (booking.vehicleType === 'Car') ? 1 : (booking.numSeats || 1);
+
+                 const vehicleRef = doc(db, `/artifacts/${appId}/public/data/vehicles`, booking.vehicleFbId);
+                 const bookingRef = doc(db, `/artifacts/${appId}/public/data/bookings`, booking.fb_id);
+                 try {
+                     await runTransaction(db, async (transaction) => {
+                         const vehicleDoc = await transaction.get(vehicleRef);
+                         if (vehicleDoc.exists()) {
+                             const currentBookedCount = vehicleDoc.data().bookedSeats || 0;
+                             const newBookedCount = Math.max(0, currentBookedCount - itemsToRelease); 
+                             transaction.update(vehicleRef, { bookedSeats: newBookedCount });
+                         } else { console.warn(`Vehicle ${booking.vehicleFbId} not found during cancel.`); }
+                         transaction.delete(bookingRef); 
+                     });
+                     this.showMessage('Booking cancelled successfully.');
+                 } catch (error) {
+                     console.error("Cancel Booking Transaction Error:", error);
+                     this.showMessage(`Error cancelling booking: ${error.message}`);
+                 }
+             },
+            
+            getPlaceholderImg(text = 'No Image Available') { 
+                return `https://placehold.co/600x400/e2e8f0/9ca3af?text=${encodeURIComponent(text)}`;
+            },
+
+            renderAdminVehicles() {
+                const container = this.elements.adminVehicleList;
+                if (!container) return; 
+                container.innerHTML = this.state.vehicles.length === 0 
+                ? '<p class="text-gray-500 italic col-span-full">No vehicles added yet.</p>' 
+                : this.state.vehicles.map(v => {
+                    const imageUrl = v.imageUrl || this.getPlaceholderImg(`${v.type}`); 
+                    let details = `Type: ${v.type} | Price: ₹${(v.pricePerSeat || 0).toFixed(2)} ${v.type === 'Car' ? '/ day' : '/ seat'}`;
+                    if (v.type === 'Car' && v.carType) {
+                        details += ` | Type: ${v.carType}`; 
+                    }
+                    const route = v.type === 'Car' ? `Area: ${v.origin}` : `${v.origin} → ${v.destination}`;
+                    return `
+                    <div class="card !p-0 overflow-hidden bg-white rounded-lg shadow-md flex flex-col"> 
+                         <img src="${imageUrl}" alt="${v.name || 'Vehicle'}" class="vehicle-image" loading="lazy" onerror="this.onerror=null; this.src='${this.getPlaceholderImg('Image Error')}';">
+                         <div class="p-4 space-y-2 relative group flex-grow flex flex-col justify-between"> 
+                            <div class="flex-grow">
+                                <button aria-label="Delete vehicle ${v.id || v.name}" class="absolute top-2 right-2 text-red-400 hover:text-red-600 font-bold text-2xl p-1 leading-none rounded-full hover:bg-red-100 transition-colors duration-150 z-10" data-vehicle-id="${v.fb_id}">&times;</button>
+                                <h3 class="text-base font-bold text-blue-600 pr-8 truncate" title="${v.name} (${v.id})">${v.name} (${v.id})</h3>
+                                <p class="text-sm font-semibold truncate" title="${route}">${route}</p>
+                                <p class="text-xs text-gray-500 mt-1">${details}</p> 
+                            </div>
+                            <p class="pt-2 border-t mt-2 text-sm">Booked: <span class="font-bold">${v.bookedSeats || 0}</span> / ${v.capacity || 'N/A'}</p>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+                container.querySelectorAll('button[data-vehicle-id]').forEach(btn => 
+                    btn.addEventListener('click', (e) => { e.stopPropagation(); this.handleDeleteVehicle(btn.dataset.vehicleId); })
+                );
+            },
+             renderUserVehicles() {
+                const container = this.elements.userVehicleList;
+                if (!container) return;
+                 container.innerHTML = this.state.vehicles.length === 0 
+                 ? '<p class="text-gray-500 italic col-span-full">No trips available currently.</p>' 
+                 : this.state.vehicles.map(v => {
+                    const bookedSeats = v.bookedSeats || 0;
+                    const capacity = v.capacity || 0;
+                    const available = capacity - bookedSeats;
+                    const isAvailable = available > 0;
+                    const imageUrl = v.imageUrl || this.getPlaceholderImg(`${v.type}`);
+                    let priceLabel = v.type === 'Car' ? '/ day' : '/ seat'; 
+                    let details = `Type: ${v.type} | Price: ₹${(v.pricePerSeat || 0).toFixed(2)} ${priceLabel}`;
+                     if (v.type === 'Car' && v.carType) {
+                        details += ` | ${v.carType}`; 
+                    }
+                     let routeDisplay = v.type === 'Car' ? `Operating Area: ${v.origin}` : `${v.origin} → ${v.destination}`; 
+                    
+                    let availabilityText;
+                    if (v.type === 'Car') {
+                        availabilityText = isAvailable 
+                            ? `<span class="font-bold text-green-600">Yes</span> (${available} available)` 
+                            : `<span class="font-bold text-red-600">No</span>`;
+                    } else {
+                        availabilityText = `<span class="font-bold ${available > 5 ? 'text-green-600' : (isAvailable ? 'text-orange-600' : 'text-red-600')}">${available}</span> / ${capacity}`;
+                    }
+
+                    return `
+                    <div class="card !p-0 overflow-hidden bg-white rounded-lg shadow-md flex flex-col"> 
+                         <img src="${imageUrl}" alt="${v.name || 'Vehicle'}" class="vehicle-image" loading="lazy" onerror="this.onerror=null; this.src='${this.getPlaceholderImg('Image Error')}';">
+                         <div class="p-4 space-y-2 flex-grow flex flex-col justify-between"> 
+                           <div class="flex-grow">
+                                <h3 class="text-base font-bold text-blue-600 truncate" title="${v.name} (${v.id})">${v.name} (${v.id})</h3>
+                                <p class="text-sm font-semibold truncate" title="${routeDisplay}">${routeDisplay}</p>
+                                <p class="text-xs text-gray-500 mt-1">${details}</p>
+                                <p class="pt-2 border-t mt-2 text-sm">Available: ${availabilityText}</p>
+                           </div>
+                            <button 
+                                class="btn btn-primary w-full mt-3 text-sm py-2" 
+                                data-vehicle-id="${v.fb_id}" 
+                                ${!isAvailable ? 'disabled title="Unavailable"' : ''}
+                            >${isAvailable ? (v.type === 'Car' ? 'Rent Now' : 'Book Now') : 'Unavailable'}</button> 
+                        </div>
+                    </div>
+                `}).join('');
+                container.querySelectorAll('button[data-vehicle-id]').forEach(btn => 
+                     btn.addEventListener('click', () => {
+                        const vehicle = this.state.vehicles.find(v => v.fb_id === btn.dataset.vehicleId);
+                        if (vehicle && (vehicle.capacity - (vehicle.bookedSeats || 0) > 0)) { 
+                            this.openBookingModal(vehicle);
+                        } else if (vehicle) {
+                            this.showMessage("This vehicle is currently unavailable.");
+                        }
+                    })
+                );
+            },
+            
+             renderAdminBookings() { 
+                 const container = this.elements.adminBookingList; if (!container) return;
+                 container.innerHTML = this.state.bookings.length === 0 ? '<p class="text-center p-6 text-gray-500 italic">No bookings found.</p>' : `
+                    <table class="w-full text-left text-sm"><thead><tr>
+                        <th class="p-2 md:p-3">User</th><th class="p-2 md:p-3">Vehicle / Route</th><th class="p-2 md:p-3 text-center">Seats / Days</th>
+                        <th class="p-2 md:p-3 text-right">Total Price</th><th class="p-2 md:p-3">Booked On</th><th class="p-2 md:p-3"></th>
+                    </tr></thead><tbody>${this.state.bookings.map(b => {
+                        const routeInfo = b.vehicleType === 'Car' 
+                            ? `(${b.userPickup || 'N/A'} → ${b.userDropoff || 'N/A'})`
+                            : `(${b.route || 'N/A'})`;
+                        const count = b.vehicleType === 'Car' ? (b.numDays || 1) : (b.numSeats || '?');
+                        return `
+                        <tr class="border-b border-gray-200 hover:bg-gray-50">
+                            <td class="p-2 md:p-3 truncate max-w-[150px] md:max-w-xs" title="${b.passengerEmail}">${b.passengerEmail}</td>
+                            <td class="p-2 md:p-3 truncate max-w-[150px] md:max-w-xs" title="${b.vehicleInfo} ${routeInfo}">${b.vehicleInfo || 'N/A'} <span class="text-xs text-gray-500 block">${routeInfo}</span></td>
+                            <td class="p-2 md:p-3 text-center">${count} ${b.vehicleType === 'Car' ? 'Days' : 'Seats'}</td>
+                            <td class="p-2 md:p-3 text-right">₹${(b.totalPrice || 0).toFixed(2)}</td>
+                            <td class="p-2 md:p-3 whitespace-nowrap">${b.bookedAt?.seconds ? new Date(b.bookedAt.seconds * 1000).toLocaleDateString() : 'N/A'}</td>
+                            <td class="p-2 md:p-3 text-center"><button class="btn btn-danger text-xs px-2 py-1" data-booking-id="${b.fb_id}">Cancel</button></td>
+                        </tr>`;
+                        }).join('')}</tbody></table>`;
+                 container.querySelectorAll('button[data-booking-id]').forEach(btn => btn.addEventListener('click', () => { const booking = this.state.bookings.find(b => b.fb_id === btn.dataset.bookingId); if(booking) this.handleAdminCancelBooking(booking); }));
+            },
+            renderUserBookings() { 
+                 const container = this.elements.userBookingList; if (!container) return;
+                 container.innerHTML = this.state.myBookings.length === 0 ? '<p class="text-center p-6 text-gray-500 italic">No bookings yet.</p>' : `
+                    <table class="w-full text-left text-sm"><thead><tr>
+                         <th class="p-2 md:p-3">Vehicle</th><th class="p-2 md:p-3">Route / Trip</th><th class="p-2 md:p-3 text-center">Seats / Days</th>
+                         <th class="p-2 md:p-3 text-right">Total Price</th><th class="p-2 md:p-3">Booked On</th><th></th>
+                    </tr></thead><tbody>${this.state.myBookings.map(b => {
+                        const routeInfo = b.vehicleType === 'Car' 
+                            ? `${b.userPickup || 'N/A'} → ${b.userDropoff || 'N/A'}` 
+                            : b.route || 'N/A';
+                        const count = b.vehicleType === 'Car' ? (b.numDays || 1) : (b.numSeats || '?');
+                        return `
+                        <tr class="border-b border-gray-200 hover:bg-gray-50">
+                            <td class="p-2 md:p-3">${b.vehicleInfo || 'N/A'}</td>
+                            <td class="p-2 md:p-3">${routeInfo}</td>
+                            <td class="p-2 md:p-3 text-center">${count} ${b.vehicleType === 'Car' ? 'Days' : 'Seats'}</td>
+                            <td class="p-2 md:p-3 text-right">₹${(b.totalPrice || 0).toFixed(2)}</td>
+                            <td class="p-2 md:p-3 whitespace-nowrap">${b.bookedAt?.seconds ? new Date(b.bookedAt.seconds * 1000).toLocaleDateString() : 'N/A'}</td>
+                            <td class="p-2 md:p-3 text-center"><button class="btn btn-danger text-xs px-2 py-1" data-booking-id="${b.fb_id}">Cancel</button></td>
+                        </tr>`;
+                        }).join('')}</tbody></table>`;
+                 container.querySelectorAll('button[data-booking-id]').forEach(btn => btn.addEventListener('click', () => { const booking = this.state.myBookings.find(b => b.fb_id === btn.dataset.bookingId); if(booking) this.handleUserCancelBooking(booking); }));
+            },
+
+            switchView(viewId) {
+                const targetView = document.getElementById(viewId);
+                if (!targetView) {
+                    console.warn(`View "${viewId}" not found. Falling back.`);
+                    const fallback = this.state.currentUser ? (this.state.userRole === 'admin' ? 'adminDashboard' : 'userDashboard') : 'login';
+                    if (viewId === fallback) { 
+                        console.error("Fallback view missing. App cannot render.");
+                        document.body.innerHTML = "<p>Error: Application views missing.</p>";
+                        return;
+                    }
+                    this.switchView(fallback); 
+                    return; 
+                }
+                this.state.activeView = viewId;
+                this.elements.views.forEach(v => v.classList.remove('active'));
+                targetView.classList.add('active');
+                this.elements.navButtons.forEach(btn => {
+                    if (btn.dataset.view) { 
+                        const isPrimary = btn.dataset.view === viewId;
+                        btn.classList.toggle('btn-primary', isPrimary && !btn.classList.contains('btn-danger'));
+                        btn.classList.toggle('btn-secondary', !isPrimary && !btn.classList.contains('btn-danger') && !btn.classList.contains('btn-primary'));
+                    }
+                });
+            },
+            showMessage(message) {
+                 if (!this.elements.modalMessage || !this.elements.messageModal) return console.error("Msg modal elements missing");
+                this.elements.modalMessage.textContent = message;
+                this.elements.messageModal.classList.remove('hidden');
+                 const btn = this.elements.closeModalBtn;
+                 btn.textContent = "Close";
+                 btn.classList.remove('btn-danger');
+                 btn.classList.add('btn-primary');
+                 const newBtn = btn.cloneNode(true); 
+                 btn.parentNode.replaceChild(newBtn, btn);
+                 this.elements.closeModalBtn = newBtn;
+                 newBtn.addEventListener('click', () => this.hideMessage(), { once: true });
+            },
+            hideMessage() {
+                 if (!this.elements.messageModal) return;
+                this.elements.messageModal.classList.add('hidden'); 
+            },
+            showConfirmation(message, onConfirm) {
+                 if (!this.elements.modalMessage || !this.elements.messageModal || !this.elements.closeModalBtn) return console.error("Confirm modal elements missing");
+                 const oldBtn = this.elements.closeModalBtn;
+                 const newBtn = oldBtn.cloneNode(true);
+                 oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+                 this.elements.closeModalBtn = newBtn; 
+                 this.elements.modalMessage.textContent = `${message}`; 
+                 newBtn.textContent = "Confirm"; 
+                 newBtn.classList.remove('btn-primary');
+                 newBtn.classList.add('btn-danger'); 
+                 const confirmHandler = () => {
+                     onConfirm(); 
+                     this.hideMessage(); 
+                 }; 
+                 newBtn.addEventListener('click', confirmHandler, { once: true }); 
+                 this.elements.messageModal.classList.remove('hidden'); 
+            },
+
+        };
+
+        bookingApp.init(); 
+    </script>
+</body>
+</html>
+
